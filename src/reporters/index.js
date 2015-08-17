@@ -33,7 +33,12 @@ exports.reporter = function (reporter, reporterCfg) {
     return exports.failReporter(reporterCfg);
   }
 
-  var rpt = exports.loadReporter(reporter || 'default');
+  var rpt = exports.loadReporter(reporter || 'default'),
+      object = {
+          results: [],
+          data: [],
+          options: []
+      }, opt;
 
   if (typeof rpt !== 'function') {
     throw new PluginError('gulp-jshint', 'Invalid reporter');
@@ -43,11 +48,14 @@ exports.reporter = function (reporter, reporterCfg) {
   return stream(function (file, cb) {
     if (file.jshint && !file.jshint.success && !file.jshint.ignored) {
       // merge the reporter config into this files config
-      var opt = _.defaults({}, reporterCfg, file.jshint.opt);
+      opt = _.defaults({}, reporterCfg, file.jshint.opt);
 
-      rpt(file.jshint.results, file.jshint.data, opt);
+      object.results.push(file.jshint.results);
+      object.data.push(file.jshint.data);
     }
 
     cb(null, file);
+  }, function(cb) {
+      rpt(object.results, object.data, opt);
   });
 };
